@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>PCP - Escala Diária</title>
+<title>M2Visual | PCP - Escala Diária</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 /* Estilos globais usando variáveis CSS para fácil personalização */
@@ -103,7 +103,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--cor-fundo);
   background:#a8cfff;
 }
 
-/* Novo estilo para o tooltip gerado por JavaScript */
+/* Tooltip centralizado e inteligente */
 .tooltip {
   position: absolute;
   background-color: var(--cor-primaria);
@@ -111,19 +111,20 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--cor-fundo);
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 14px;
-  white-space: nowrap;
   z-index: 100;
   box-shadow: var(--sombra-suave);
-  /* Efeito de transição */
   opacity: 0;
-  transition: opacity 0.3s ease-out;
+  transition: opacity 0.2s ease-out;
   pointer-events: none;
+  max-width: 280px;          /* evita estourar horizontalmente */
+  white-space: normal;       /* permite quebra de linha */
+  text-align: center;
+  transform: translateX(-50%); /* centraliza em relação ao label */
 }
-/* Estilo do bico do tooltip */
 .tooltip::after {
   content: '';
   position: absolute;
-  top: 100%;
+  top: 100%;                  /* seta embaixo do tooltip (apontando p/ baixo) */
   left: 50%;
   transform: translateX(-50%) rotate(45deg);
   width: 10px;
@@ -131,27 +132,32 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--cor-fundo);
   background-color: var(--cor-primaria);
   margin-top: -5px;
 }
+/* Quando o tooltip precisa ficar abaixo do rótulo (pouco espaço acima) */
+.tooltip.below::after {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: -5px;
+}
 
-/* Estilo para os ícones de habilitação */
+/* Ícones de habilitação */
 .icon-carro { margin-left: 5px; font-size: 1.2em; }
 .icon-moto { margin-left: 5px; font-size: 1.2em; }
 
-/* Estilo para a nova seção de ordenação */
+/* Seção de ordenação */
 .sorting-section {
   display: flex;
-  justify-content: flex-start; /* Alinhar à esquerda */
+  justify-content: flex-start;
   align-items: center;
   margin: 25px 0;
   gap: 10px;
   flex-wrap: wrap;
 }
-
 .sorting-section label {
   font-weight: 600;
   color: var(--cor-primaria);
   white-space: nowrap;
 }
-
 .sorting-section select {
   padding: 8px;
   border-radius: 8px;
@@ -162,12 +168,10 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--cor-fundo);
   max-width: 150px;
   transition: border-color .3s;
 }
-
 .sorting-section select:focus {
   outline: none;
   border-color: var(--cor-sucesso);
 }
-
 
 .buttons { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; margin-top:25px; }
 button {
@@ -187,7 +191,6 @@ button:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
-
 #addServiceBtn { background:var(--cor-sucesso); color:#fff; }
 #clearListBtn { background: #d03030; color: #fff; }
 
@@ -218,11 +221,7 @@ button:hover {
   padding: 0;
   margin: 0;
 }
-.dropdown-content li {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
+.dropdown-content li { width: 100%; margin: 0; padding: 0; }
 .dropdown-content button {
   display: block;
   background: transparent;
@@ -272,7 +271,7 @@ button:hover {
   position:relative;
   background:#e1ffc7;
   box-shadow:0 2px 6px rgba(0,0,0,0.05);
-  border-left:8px solid var(--cor-sucesso); /* Borda mais grossa */
+  border-left:8px solid var(--cor-sucesso);
 }
 .service-box h3 { margin:0 0 10px 0; font-size:20px; color:var(--cor-primaria); }
 .service-box p { margin: 5px 0; font-size: 15px; }
@@ -283,7 +282,7 @@ button:hover {
   right:15px;
   display:flex;
   gap:8px;
-  white-space:nowrap; /* Adicionado para evitar quebra de linha */
+  white-space:nowrap;
 }
 .action-btn { padding:8px 12px; font-size:13px; border:none; border-radius:6px; cursor:pointer; transition:.3s; }
 .edit-btn { background:var(--cor-aviso); color:#000; }
@@ -292,18 +291,18 @@ button:hover {
 
 #serviceCount { font-weight:600; margin-bottom:15px; text-align:right; color: var(--cor-primaria); }
 
-/* Mensagens de feedback (toast) - Adicionando animação */
+/* Toast com comportamento inteligente */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 0.95; transform: translateY(0); } }
 @keyframes fadeOut { from { opacity: 0.95; transform: translateY(0); } to { opacity: 0; transform: translateY(20px); } }
 
 .toast {
   position:fixed;
-  bottom:20px;
   left:50%;
   transform:translateX(-50%);
+  bottom: max(20px, env(safe-area-inset-bottom));  /* respeita safe-area (notch) */
   background: var(--cor-primaria);
   color:#fff;
-  padding:15px 25px;
+  padding:15px 20px;
   border-radius:8px;
   opacity:0;
   display:none;
@@ -311,6 +310,10 @@ button:hover {
   z-index:1000;
   box-shadow: var(--sombra-suave);
   animation: fadeIn 0.5s ease-out forwards;
+  max-width: min(420px, calc(100vw - 32px)); /* nunca sai da viewport */
+  text-align:center;
+  word-wrap: break-word;
+  overflow-wrap: anywhere; /* quebra textos muito longos */
 }
 .toast.hide { animation: fadeOut 0.5s ease-out forwards; }
 .toast.success { background-color: var(--cor-sucesso); }
@@ -320,22 +323,18 @@ button:hover {
 .footer {
     text-align: center;
     padding: 20px;
-    margin-top: auto; /* Empurra o footer para baixo */
+    margin-top: auto;
     background-color: var(--cor-primaria);
     color: #fff;
     font-size: 14px;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
 }
-
 .footer a {
   color: #fff;
   text-decoration: underline;
   transition: opacity .3s;
 }
-
-.footer a:hover {
-  opacity: 0.8;
-}
+.footer a:hover { opacity: 0.8; }
 
 @media (max-width:600px){
   .header h2 { font-size:20px; text-align:center; }
@@ -426,7 +425,7 @@ button:hover {
     © Sistema criado por <a href="https://www.instagram.com/senos.designer/" target="_blank">João Victor Senos</a> | Todos os direitos reservados à <a href="https://www.instagram.com/stories/m2visualbr/" target="_blank">M2Visual</a>
 </footer>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
@@ -464,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Array para armazenar os serviços. Carrega do localStorage se houver dados
   let listaServicos = JSON.parse(localStorage.getItem('escalaServicos')) || [];
   let editIndex = -1; // -1 indica que não estamos em modo de edição
-  let originalOrder = []; // Novo array para salvar a ordem original
+  let originalOrder = []; // Array para salvar a ordem original
 
   /* -------- Referências aos Elementos do DOM -------- */
   const elements = {
@@ -489,71 +488,98 @@ document.addEventListener('DOMContentLoaded', () => {
     sortOrderSelect: document.getElementById('sortOrder')
   };
 
-  /* -------- Funções de Utilidade -------- */
+  /* -------- Utilidades -------- */
 
-  /**
-   * Exibe uma mensagem de feedback para o usuário.
-   * @param {string} msg A mensagem a ser exibida.
-   * @param {string} type O tipo da mensagem ('success', 'warning', 'error').
-   * @param {number} time O tempo em milissegundos para a mensagem desaparecer.
-   */
   function showToast(msg, type = 'success', time = 2000) {
     const toast = elements.toast;
     toast.textContent = msg;
     toast.className = `toast ${type}`;
     toast.style.display = 'block';
+
+    // Garante que o toast nunca ultrapasse a viewport (já tratado via CSS),
+    // mas, se mudar o zoom/tamanho da fonte durante a exibição, recalculamos.
+    requestAnimationFrame(() => {
+      const rect = toast.getBoundingClientRect();
+      // Se por algum motivo a largura estourar (ex.: fontes muito grandes),
+      // ajusta o padding para manter visível.
+      if (rect.width > window.innerWidth - 16) {
+        toast.style.paddingLeft = '8px';
+        toast.style.paddingRight = '8px';
+      }
+    });
+
     setTimeout(() => {
       toast.classList.add('hide');
       setTimeout(() => {
         toast.style.display = 'none';
         toast.classList.remove('hide');
-        toast.className = 'toast'; // Limpa a classe para o próximo uso
-      }, 500); // tempo da animação de saída
+        toast.className = 'toast'; // limpa classes para o próximo uso
+      }, 500);
     }, time);
   }
 
-  /**
-   * Salva a lista de serviços no localStorage para persistência.
-   */
   function saveToLocalStorage() {
     localStorage.setItem('escalaServicos', JSON.stringify(listaServicos));
   }
 
-  /**
-   * Adiciona um evento de mouseover para mostrar o tooltip.
-   */
+  /* -------- Tooltip centralizado + inteligente -------- */
   function setupTooltip(element, text) {
-      element.addEventListener('mouseenter', (event) => {
-          const tooltip = document.createElement('div');
-          tooltip.className = 'tooltip';
-          tooltip.textContent = text;
-          document.body.appendChild(tooltip);
+    element.addEventListener('mouseenter', () => {
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip';
+      tooltip.textContent = text;
+      document.body.appendChild(tooltip);
 
-          const rect = element.getBoundingClientRect();
-          tooltip.style.left = `${rect.left + window.scrollX + rect.width / 2}px`;
-          tooltip.style.top = `${rect.top + window.scrollY - tooltip.offsetHeight - 10}px`;
-          
-          setTimeout(() => {
-            tooltip.style.opacity = '1';
-          }, 10);
-          
-          element.currentTooltip = tooltip;
+      const labelRect = element.getBoundingClientRect();
+      const viewportLeft = window.scrollX;
+      const viewportRight = window.scrollX + document.documentElement.clientWidth;
+
+      // Primeiro define posição horizontal centralizada
+      let left = labelRect.left + window.scrollX + (labelRect.width / 2);
+
+      // Mede o tooltip após inserir no DOM
+      requestAnimationFrame(() => {
+        const tipRect = tooltip.getBoundingClientRect();
+
+        // Padrão: acima do label
+        let top = labelRect.top + window.scrollY - tipRect.height - 12;
+        tooltip.classList.remove('below');
+
+        // Se não houver espaço acima, coloca abaixo
+        if (top < window.scrollY + 8) {
+          top = labelRect.bottom + window.scrollY + 12;
+          tooltip.classList.add('below');
+        }
+
+        // Evita sair pelas laterais (mantém uma margem de 8px)
+        const minLeft = viewportLeft + (tipRect.width / 2) + 8;
+        const maxLeft = viewportRight - (tipRect.width / 2) - 8;
+        if (left < minLeft) left = minLeft;
+        if (left > maxLeft) left = maxLeft;
+
+        // Aplica posições finais
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+
+        // Anima a entrada
+        tooltip.style.opacity = '1';
       });
 
-      element.addEventListener('mouseleave', () => {
-          if (element.currentTooltip) {
-              element.currentTooltip.style.opacity = '0';
-              setTimeout(() => {
-                  element.currentTooltip.remove();
-                  element.currentTooltip = null;
-              }, 300);
-          }
-      });
+      element.currentTooltip = tooltip;
+    });
+
+    element.addEventListener('mouseleave', () => {
+      if (element.currentTooltip) {
+        element.currentTooltip.style.opacity = '0';
+        setTimeout(() => {
+          element.currentTooltip?.remove();
+          element.currentTooltip = null;
+        }, 300);
+      }
+    });
   }
 
-  /**
-   * Atualiza a lista de funcionários disponíveis e renderiza os checkboxes.
-   */
+  /* -------- Renderização e ações -------- */
   function atualizarCheckboxesFuncionarios() {
     elements.employeesList.innerHTML = '';
     const employeesInUse = listaServicos.flatMap(s => s.employees);
@@ -567,10 +593,10 @@ document.addEventListener('DOMContentLoaded', () => {
       label.appendChild(cb);
       label.appendChild(document.createTextNode(' ' + employee.nome));
       
-      // Adiciona o tooltip
+      // Tooltip com as funções do funcionário
       setupTooltip(label, employee.funcao);
       
-      // Adiciona os ícones de habilitação
+      // Ícones de habilitação
       if (employee.habilitacao.includes('CARRO')) {
         const carIcon = document.createElement('span');
         carIcon.textContent = ' 🚗';
@@ -588,9 +614,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /**
-   * Limpa todos os campos do formulário.
-   */
   function limparFormulario() {
     elements.serviceInput.value = '';
     elements.osInput.value = '';
@@ -602,11 +625,6 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.addServiceBtn.textContent = "Adicionar Serviço";
   }
 
-  /**
-   * Renderiza um único serviço na área de preview.
-   * @param {object} item O objeto do serviço a ser renderizado.
-   * @param {number} index O índice do serviço na lista.
-   */
   function renderizarServico(item, index) {
     const box = document.createElement('div');
     box.className = 'service-box';
@@ -643,10 +661,6 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.previewDiv.appendChild(box);
   }
 
-  /**
-   * Atualiza a área de preview e a contagem total de serviços.
-   * Re-renderiza toda a lista para simplicidade.
-   */
   function atualizarPreview() {
     elements.previewDiv.innerHTML = '';
     if (listaServicos.length === 0) {
@@ -659,31 +673,21 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.serviceCountDiv.textContent = `Total de Serviços: ${listaServicos.length}`;
   }
   
-  /**
-   * Ordena a lista de serviços com base na opção selecionada.
-   */
   function sortServices() {
     const sortValue = elements.sortOrderSelect.value;
-    const priorityOrder = { 'Alta': 1, 'Média': 2, 'Baixa': 3, '': 4 }; // Ordem de prioridade
+    const priorityOrder = { 'Alta': 1, 'Média': 2, 'Baixa': 3, '': 4 };
 
     if (sortValue === 'default') {
-      // Retorna à ordem original salva
       listaServicos = [...originalOrder];
     } else if (sortValue === 'priority') {
-      // Ordena por prioridade
       listaServicos.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
     } else if (sortValue === 'client') {
-      // Ordena por nome do cliente
       listaServicos.sort((a, b) => a.service.localeCompare(b.service, 'pt-BR', { sensitivity: 'base' }));
     }
 
     atualizarPreview();
   }
 
-  /**
-   * Edita um serviço existente, preenchendo o formulário com seus dados.
-   * @param {number} index O índice do serviço a ser editado.
-   */
   function editarServico(index) {
     const item = listaServicos[index];
     elements.serviceInput.value = item.service;
@@ -702,25 +706,18 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast("Modo de edição ativado.", 'warning');
   }
 
-  /**
-   * Remove um serviço da lista e atualiza a interface.
-   * @param {number} index O índice do serviço a ser removido.
-   */
   function removerServico(index) {
-      if (confirm("Tem certeza que deseja remover este serviço?")) {
-        listaServicos.splice(index, 1);
-        originalOrder.splice(index, 1); // Remove da lista original também
-        saveToLocalStorage();
-        limparFormulario();
-        atualizarCheckboxesFuncionarios();
-        sortServices(); // Re-ordena após a remoção
-        showToast("Serviço removido com sucesso!");
+    if (confirm("Tem certeza que deseja remover este serviço?")) {
+      listaServicos.splice(index, 1);
+      originalOrder.splice(index, 1);
+      saveToLocalStorage();
+      limparFormulario();
+      atualizarCheckboxesFuncionarios();
+      sortServices();
+      showToast("Serviço removido com sucesso!", 'success');
     }
   }
 
-  /**
-   * Adiciona um novo serviço ou salva a edição de um serviço existente.
-   */
   function adicionarOuSalvarServico() {
     const serviceName = elements.serviceInput.value.trim();
     const osNum = elements.osInput.value.trim();
@@ -750,79 +747,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (editIndex > -1) {
       listaServicos[editIndex] = novoItem;
-      // Atualiza o item correspondente na ordem original para evitar inconsistências
       const originalIndex = originalOrder.findIndex(item => item.service === novoItem.service);
       if (originalIndex !== -1) {
-          originalOrder[originalIndex] = { ...novoItem };
+        originalOrder[originalIndex] = { ...novoItem };
       }
-      showToast("Serviço editado com sucesso!");
+      showToast("Serviço editado com sucesso!", 'success');
     } else {
       listaServicos.push(novoItem);
-      originalOrder.push({ ...novoItem }); // Salva uma cópia para a ordem original
-      showToast("Serviço adicionado com sucesso!");
+      originalOrder.push({ ...novoItem });
+      showToast("Serviço adicionado com sucesso!", 'success');
     }
 
     saveToLocalStorage();
     limparFormulario();
     atualizarCheckboxesFuncionarios();
-    sortServices(); // Re-ordena a lista após adicionar/salvar
+    sortServices();
   }
 
-  /* -------- Event Listeners -------- */
+  /* -------- Listeners -------- */
   elements.addServiceBtn.addEventListener('click', adicionarOuSalvarServico);
 
   elements.clearListBtn.addEventListener('click', () => {
     if (confirm("Tem certeza que deseja limpar toda a escala?")) {
       listaServicos = [];
-      originalOrder = []; // Limpa a ordem original também
+      originalOrder = [];
       saveToLocalStorage();
       limparFormulario();
       atualizarCheckboxesFuncionarios();
       atualizarPreview();
-      showToast("Escala limpa com sucesso!");
+      showToast("Escala limpa com sucesso!", 'success');
     }
   });
 
-  // Listener para o dropdown de exportação
   elements.exportMainBtn.addEventListener('click', e => {
     e.stopPropagation();
     elements.dropdownContent.style.display = elements.dropdownContent.style.display === 'block' ? 'none' : 'block';
   });
-  // Fecha o dropdown ao clicar fora
   document.addEventListener('click', e => {
     if (!elements.exportDropdown.contains(e.target)) {
       elements.dropdownContent.style.display = 'none';
     }
   });
   
-  // Novo Listener para o dropdown de ordenação
   elements.sortOrderSelect.addEventListener('change', sortServices);
 
-  /* -------- Funções de Exportação -------- */
-  
-  /**
-   * Gera o texto formatado da escala para exportação.
-   * @returns {string} O texto completo da escala.
-   */
+  /* -------- Exportações -------- */
   function gerarTextoEscala() {
     if (listaServicos.length === 0) {
       showToast("Nenhum serviço para exportar!", 'warning');
       return null;
     }
-    let text = `===========================================\n          ESCALA DIÁRIA - M2Visual\n===========================================\n\n`;
+    
+    let text = `===========================================\n         *ESCALA DIÁRIA - M2Visual*\n===========================================\n\n`;
+    
     listaServicos.forEach(item => {
-      text += `Cliente: ${item.service}\n`;
-      if (item.priority) text += `Prioridade: ${item.priority}\n`;
-      if (item.os) text += `OS: ${item.os}\n`;
-      text += `Carros: ${item.cars.join(", ")}\n`;
-      text += `Funcionários: ${item.employees.join(", ")}\n`;
-      text += `Tarefa: ${item.description}\n`;
-      text += `-------------------------------------------\n`;
+      text += `*Cliente:* ${item.service}\n`;
+      if (item.priority) text += `*Prioridade:* ${item.priority}\n`;
+      if (item.os) text += `*OS:* ${item.os}\n`;
+      text += `*Carros:* ${item.cars.join(", ")}\n`;
+      text += `*Funcionários:* ${item.employees.join(", ")}\n`;
+      text += `*Tarefa:* ${item.description}\n`;
+      text += `-------------------------------------------\n\n`;
     });
     return text;
   }
 
-  // Exportar para TXT
   elements.exportTxtBtn.addEventListener('click', () => {
     const text = gerarTextoEscala();
     if (!text) return;
@@ -831,11 +820,10 @@ document.addEventListener('DOMContentLoaded', () => {
     a.download = `Escala-${new Date().toLocaleDateString('pt-BR')}.txt`;
     a.href = URL.createObjectURL(blob);
     a.click();
-    showToast("Arquivo TXT gerado com sucesso!");
+    showToast("Arquivo TXT gerado com sucesso!", 'success');
     elements.dropdownContent.style.display = 'none';
   });
 
-  // Exportar para PDF
   elements.exportPdfBtn.addEventListener('click', () => {
     if (listaServicos.length === 0) {
       showToast("Nenhum serviço para exportar!", 'warning');
@@ -867,14 +855,10 @@ document.addEventListener('DOMContentLoaded', () => {
       y += 3;
     });
     doc.save(`Escala-${new Date().toLocaleDateString('pt-BR')}.pdf`);
-    showToast("PDF gerado com sucesso!");
+    showToast("PDF gerado com sucesso!", 'success');
     elements.dropdownContent.style.display = 'none';
   });
   
-  /**
-   * @description Copia o texto para a área de transferência usando uma solução robusta.
-   * @param {string} text O texto a ser copiado.
-   */
   function copyToClipboard(text) {
     if (!text) return;
     const tempTextarea = document.createElement('textarea');
@@ -889,7 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const success = document.execCommand('copy');
       if (success) {
-        showToast("Escala copiada para o WhatsApp!");
+        showToast("Escala copiada para o WhatsApp!", 'success');
       } else {
         showToast("Não foi possível copiar. Tente novamente.", 'error');
       }
@@ -900,7 +884,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Copiar para WhatsApp
   elements.copyBtn.addEventListener('click', () => {
     const text = gerarTextoEscala();
     if (!text) return;
@@ -908,9 +891,9 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.dropdownContent.style.display = 'none';
   });
   
-  // Executa a função inicial para carregar os dados
+  // Inicialização
   if (listaServicos.length > 0) {
-      originalOrder = [...listaServicos]; // Salva a ordem inicial ao carregar
+      originalOrder = [...listaServicos];
   }
   atualizarCheckboxesFuncionarios();
   atualizarPreview();
