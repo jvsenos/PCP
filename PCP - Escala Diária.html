@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>PCP - Escala Diária</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* Estilos globais usando variáveis CSS para fácil personalização */
+:root {
+  --cor-primaria: #001f3f;
+  --cor-secundaria: #f7f9fb;
+  --cor-fundo: #eaf1f8; /* Fundo mais claro e suave */
+  --cor-texto: #333;
+  --cor-sucesso: #28a745; /* Verde mais vibrante */
+  --cor-aviso: #ffc107; /* Amarelo mais claro */
+  --cor-erro: #dc3545; /* Vermelho mais forte */
+  --sombra: 0 8px 16px rgba(0,0,0,0.1); /* Sombra mais acentuada */
+  --sombra-suave: 0 4px 8px rgba(0,0,0,0.05); /* Sombra mais sutil */
+  --borda-arredondada: 12px;
+}
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--cor-fundo); margin:0; padding:0; color: var(--cor-texto); display: flex; flex-direction: column; min-height: 100vh; }
+.header {
+  background: var(--cor-primaria);
+  padding: 25px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: var(--sombra-suave);
+}
+.header img { height:60px; border-radius:8px; }
+.header h2 { color:#fff; margin:0; font-size:28px; white-space: nowrap; }
+
+.container {
+  max-width:900px;
+  margin:30px auto;
+  background: var(--cor-secundaria);
+  padding:30px;
+  border-radius: var(--borda-arredondada);
+  box-shadow: var(--sombra);
+}
+
+.form-section {
+  margin-bottom:25px;
+  padding:20px;
+  border-radius:12px;
+  background:#fff;
+  border:1px solid #e0e0e0;
+  box-shadow: var(--sombra-suave);
+}
+.form-section label { font-weight:600; display:block; margin-bottom:8px; color: var(--cor-primaria); }
+.form-section input, .form-section textarea, .form-section select {
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:15px;
+  box-sizing:border-box;
+  background:#f9f9f9;
+  transition: border-color .3s;
+}
+.form-section input:focus, .form-section textarea:focus, .form-section select:focus {
+  outline: none;
+  border-color: var(--cor-sucesso);
+}
+.form-section textarea { resize:vertical; min-height:80px; }
+
+/* Grupo de checkboxes com barra de rolagem aprimorada */
+.checkbox-group {
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-bottom:12px;
+  max-height:150px;
+  overflow-y:auto;
+  padding-right: 12px;
+}
+.checkbox-group::-webkit-scrollbar { width: 8px; }
+.checkbox-group::-webkit-scrollbar-thumb { background-color: var(--cor-primaria); border-radius: 4px; }
+.checkbox-group::-webkit-scrollbar-track { background-color: #f0f0f0; }
+
+.checkbox-group label {
+  font-weight:normal;
+  background:#d0e4ff;
+  padding:8px 15px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:.3s;
+  display:flex;
+  align-items:center;
+  white-space:nowrap;
+  max-width:200px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  position: relative;
+}
+.checkbox-group input[type=checkbox] { margin-right:8px; cursor:pointer; }
+
+.checkbox-group label:hover {
+  background:#a8cfff;
+}
+
+/* Novo estilo para o tooltip gerado por JavaScript */
+.tooltip {
+  position: absolute;
+  background-color: var(--cor-primaria);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: var(--sombra-suave);
+  /* Efeito de transição */
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  pointer-events: none;
+}
+/* Estilo do bico do tooltip */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background-color: var(--cor-primaria);
+  margin-top: -5px;
+}
+
+/* Estilo para os ícones de habilitação */
+.icon-carro { margin-left: 5px; font-size: 1.2em; }
+.icon-moto { margin-left: 5px; font-size: 1.2em; }
+
+/* Estilo para a nova seção de ordenação */
+.sorting-section {
+  display: flex;
+  justify-content: flex-start; /* Alinhar à esquerda */
+  align-items: center;
+  margin: 25px 0;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sorting-section label {
+  font-weight: 600;
+  color: var(--cor-primaria);
+  white-space: nowrap;
+}
+
+.sorting-section select {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background: #f9f9f9;
+  cursor: pointer;
+  max-width: 150px;
+  transition: border-color .3s;
+}
+
+.sorting-section select:focus {
+  outline: none;
+  border-color: var(--cor-sucesso);
+}
+
+
+.buttons { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; margin-top:25px; }
+button {
+  padding:14px 28px;
+  font-size:16px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  transition:.3s ease-in-out;
+  flex:1 1 180px;
+  font-weight:600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+button:hover {
+  opacity:.9;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+#addServiceBtn { background:var(--cor-sucesso); color:#fff; }
+#clearListBtn { background: #d03030; color: #fff; }
+
+/* Dropdown Export */
+#exportDropdown {
+    position:relative;
+    flex:1 1 180px;
+    min-width:160px;
+}
+#exportDropdown > button {
+  width:100%; background:#007bff; color:#fff; border:none;
+  border-radius:10px; padding:14px 28px; cursor:pointer;
+  font-weight:600; font-size:16px;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  box-shadow: var(--sombra-suave);
+  z-index: 1000;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+.dropdown-content li {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+.dropdown-content button {
+  display: block;
+  background: transparent;
+  color: #333;
+  border: none;
+  padding: 8px 15px;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background-color 0.2s;
+}
+.dropdown-content button:hover {
+  background: #f0f0f0;
+  color: var(--cor-primaria);
+}
+
+#preview {
+  margin-top:25px;
+  padding:20px;
+  border-radius:12px;
+  max-height:500px;
+  overflow-y:auto;
+  box-sizing:border-box;
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: var(--sombra-suave);
+}
+#preview::-webkit-scrollbar { width: 8px; }
+#preview::-webkit-scrollbar-thumb { background-color: #aaa; border-radius: 4px; }
+#preview::-webkit-scrollbar-track { background-color: #f0f0f0; }
+
+#emptyMessage {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+    font-size: 1.2em;
+    margin: 0;
+}
+
+.service-box {
+  border-radius:12px;
+  padding:15px;
+  margin-bottom:20px;
+  position:relative;
+  background:#e1ffc7;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  border-left:8px solid var(--cor-sucesso); /* Borda mais grossa */
+}
+.service-box h3 { margin:0 0 10px 0; font-size:20px; color:var(--cor-primaria); }
+.service-box p { margin: 5px 0; font-size: 15px; }
+.service-box p strong { color: var(--cor-aviso); }
+.service-box .actions {
+  position:absolute;
+  top:15px;
+  right:15px;
+  display:flex;
+  gap:8px;
+  white-space:nowrap; /* Adicionado para evitar quebra de linha */
+}
+.action-btn { padding:8px 12px; font-size:13px; border:none; border-radius:6px; cursor:pointer; transition:.3s; }
+.edit-btn { background:var(--cor-aviso); color:#000; }
+.remove-btn { background:var(--cor-erro); color:#fff; }
+.action-btn:hover { opacity: .85; }
+
+#serviceCount { font-weight:600; margin-bottom:15px; text-align:right; color: var(--cor-primaria); }
+
+/* Mensagens de feedback (toast) - Adicionando animação */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 0.95; transform: translateY(0); } }
+@keyframes fadeOut { from { opacity: 0.95; transform: translateY(0); } to { opacity: 0; transform: translateY(20px); } }
+
+.toast {
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background: var(--cor-primaria);
+  color:#fff;
+  padding:15px 25px;
+  border-radius:8px;
+  opacity:0;
+  display:none;
+  font-weight:600;
+  z-index:1000;
+  box-shadow: var(--sombra-suave);
+  animation: fadeIn 0.5s ease-out forwards;
+}
+.toast.hide { animation: fadeOut 0.5s ease-out forwards; }
+.toast.success { background-color: var(--cor-sucesso); }
+.toast.error { background-color: var(--cor-erro); }
+.toast.warning { background-color: var(--cor-aviso); }
+
+.footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: auto; /* Empurra o footer para baixo */
+    background-color: var(--cor-primaria);
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.footer a {
+  color: #fff;
+  text-decoration: underline;
+  transition: opacity .3s;
+}
+
+.footer a:hover {
+  opacity: 0.8;
+}
+
+@media (max-width:600px){
+  .header h2 { font-size:20px; text-align:center; }
+  .container { padding: 20px; }
+  button { font-size:14px; padding: 12px 20px; }
+  .form-section { padding:15px; }
+  .service-box .actions { position:static; margin-top:10px; }
+  .checkbox-group label { font-size:13px; max-width: 150px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://m2visual.com.br/wp-content/uploads/2024/10/e9b84a_710667977e194efba60bd01d09f82977mv2.webp" alt="M2Visual Logo">
+  <h2>PCP - Escala Diária</h2>
+</div>
+
+<div class="container">
+  <div id="serviceCount">Total de Serviços: 0</div>
+
+  <div class="form-section">
+    <label for="service">Cliente: *</label>
+    <input type="text" id="service" placeholder="Digite o nome do cliente" required>
+    <label for="osNumber">Número da OS: (opcional)</label>
+    <input type="text" id="osNumber" placeholder="Digite o número da OS se houver">
+  </div>
+
+  <div class="form-section">
+    <label>Prioridade: (opcional)</label>
+    <select id="priority">
+      <option value="">-- Selecione --</option>
+      <option value="Alta">Alta</option>
+      <option value="Média">Média</option>
+      <option value="Baixa">Baixa</option>
+    </select>
+  </div>
+
+  <div class="form-section">
+    <label>Carros: *</label>
+    <div class="checkbox-group" id="carsList">
+      <label data-title="UNO"><input type="checkbox" value="UNO"> UNO</label>
+      <label data-title="CAMINHÃO BAÚ"><input type="checkbox" value="CAMINHÃO BAÚ"> CAMINHÃO BAÚ</label>
+      <label data-title="CAMINHÃO ABERTO"><input type="checkbox" value="CAMINHÃO ABERTO"> CAMINHÃO ABERTO</label>
+      <label data-title="MOTO"><input type="checkbox" value="MOTO"> MOTO</label>
+      <label data-title="STRADA"><input type="checkbox" value="STRADA"> STRADA</label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <label>Funcionários: *</label>
+    <div class="checkbox-group" id="employeesList"></div>
+  </div>
+
+  <div class="form-section">
+    <label for="description">Tarefa: *</label>
+    <textarea id="description" placeholder="Digite a tarefa do serviço" required></textarea>
+  </div>
+
+  <div class="buttons">
+    <button id="addServiceBtn" type="button">Adicionar Serviço</button>
+    <button id="clearListBtn" type="button">Limpar Escala</button>
+    <div id="exportDropdown">
+      <button id="exportMainBtn" type="button">Exportar como ⬇</button>
+      <ul class="dropdown-content" id="dropdownContent">
+        <li><button id="exportTxtBtn" type="button">TXT</button></li>
+        <li><button id="exportPdfBtn" type="button">PDF</button></li>
+        <li><button id="copyBtn" type="button">WhatsApp</button></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="sorting-section">
+    <label for="sortOrder">Ordenar por:</label>
+    <select id="sortOrder">
+      <option value="default">Padrão</option>
+      <option value="priority">Prioridade</option>
+      <option value="client">Cliente (A-Z)</option>
+    </select>
+  </div>
+
+  <div id="preview">
+    <p id="emptyMessage">Nenhum serviço adicionado ainda.</p>
+  </div>
+</div>
+
+<footer class="footer">
+    © Sistema criado por <a href="https://www.instagram.com/senos.designer/" target="_blank">João Victor Senos</a> | Todos os direitos reservados à <a href="https://www.instagram.com/stories/m2visualbr/" target="_blank">M2Visual</a>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// Aguarda o carregamento completo do DOM antes de iniciar o script
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* -------- Estado da Aplicação -------- */
+  const EMPLOYEES = [
+    { nome: "MINEIRO", funcao: "ADESIVADOR", habilitacao: [] },
+    { nome: "ALEX", funcao: "ADESIVADOR, INSTALADOR", habilitacao: [] },
+    { nome: "BRENNO", funcao: "AJUDANTE", habilitacao: [] },
+    { nome: "GRINGO", funcao: "INSTALADOR, MONTADOR, MARCENEIRO", habilitacao: [] },
+    { nome: "LIGEIRINHO", funcao: "INSTALADOR, ADESIVADOR, MONTADOR, ILUMINAÇÃO", habilitacao: [] },
+    { nome: "GLESTION", funcao: "SERRALHEIRO, INSTALADOR", habilitacao: ['CARRO'] },
+    { nome: "GUIGUI", funcao: "INSTALADOR, SERRALHEIRO, ADESIVADOR, ILUMINAÇÃO, MONTADOR", habilitacao: ['MOTO'] },
+    { nome: "GUILHERME", funcao: "AJUDANTE", habilitacao: [] },
+    { nome: "JOAOZINHO", funcao: "AJUDANTE", habilitacao: [] },
+    { nome: "JONATHA", funcao: "INSTALADOR, SERRALHEIRO, MONTADOR", habilitacao: ['MOTO', 'CARRO'] },
+    { nome: "ORELHA", funcao: "MONTADOR, INSTALADOR", habilitacao: [] },
+    { nome: "KENNETH", funcao: "INSTALADOR, MONTADOR", habilitacao: [] },
+    { nome: "LUCINHO", funcao: "MAQUINÁRIO", habilitacao: ['CARRO'] },
+    { nome: "DJ", funcao: "PINTOR, INSTALADOR", habilitacao: ['MOTO', 'CARRO'] },
+    { nome: "MARCELO", funcao: "LETRISTA, MONTADOR, ILUMINAÇÃO, INSTALADOR", habilitacao: ['MOTO', 'CARRO'] },
+    { nome: "MATHEUS", funcao: "INSTALADOR, MONTADOR, ADESIVADOR", habilitacao: ['MOTO', 'CARRO'] },
+    { nome: "MATHEUS CEZARETE", funcao: "INSTALADOR, ADESIVADOR", habilitacao: ['CARRO'] },
+    { nome: "MATHIAS CEZARETE", funcao: "ADESIVADOR", habilitacao: ['MOTO'] },
+    { nome: "VINICIUS", funcao: "MAQUINÁRIO, INSTALADOR", habilitacao: ['CARRO'] },
+    { nome: "SHOW", funcao: "MONTADOR, PINTOR, INSTALADOR", habilitacao: [] },
+    { nome: "WANDERSON", funcao: "SERRALHEIRO, INSTALADOR", habilitacao: ['MOTO', 'CARRO'] },
+    { nome: "WESLEY", funcao: "INSTALADOR, LETRISTA, ILUMINAÇÃO, MONTADOR", habilitacao: ['MOTO', 'CARRO'] },
+    { nome: "MUMUZINHO", funcao: "INSTALADOR, MONTADOR", habilitacao: [] },
+    { nome: "SHESLEY", funcao: "SERRALHEIRO, ADESIVADOR, PINTOR, INSTALADOR, MONTADOR", habilitacao: ['MOTO', 'CARRO'] }
+  ];
+  
+  // Array para armazenar os serviços. Carrega do localStorage se houver dados
+  let listaServicos = JSON.parse(localStorage.getItem('escalaServicos')) || [];
+  let editIndex = -1; // -1 indica que não estamos em modo de edição
+  let originalOrder = []; // Novo array para salvar a ordem original
+
+  /* -------- Referências aos Elementos do DOM -------- */
+  const elements = {
+    serviceInput: document.getElementById('service'),
+    osInput: document.getElementById('osNumber'),
+    descriptionInput: document.getElementById('description'),
+    priorityInput: document.getElementById('priority'),
+    employeesList: document.getElementById('employeesList'),
+    carsListNodes: Array.from(document.querySelectorAll('#carsList input[type=checkbox]')),
+    previewDiv: document.getElementById('preview'),
+    serviceCountDiv: document.getElementById('serviceCount'),
+    addServiceBtn: document.getElementById('addServiceBtn'),
+    exportDropdown: document.getElementById('exportDropdown'),
+    exportMainBtn: document.getElementById('exportMainBtn'),
+    dropdownContent: document.getElementById('dropdownContent'),
+    clearListBtn: document.getElementById('clearListBtn'),
+    toast: document.getElementById('toast'),
+    exportTxtBtn: document.getElementById('exportTxtBtn'),
+    exportPdfBtn: document.getElementById('exportPdfBtn'),
+    copyBtn: document.getElementById('copyBtn'),
+    emptyMessage: document.getElementById('emptyMessage'),
+    sortOrderSelect: document.getElementById('sortOrder')
+  };
+
+  /* -------- Funções de Utilidade -------- */
+
+  /**
+   * Exibe uma mensagem de feedback para o usuário.
+   * @param {string} msg A mensagem a ser exibida.
+   * @param {string} type O tipo da mensagem ('success', 'warning', 'error').
+   * @param {number} time O tempo em milissegundos para a mensagem desaparecer.
+   */
+  function showToast(msg, type = 'success', time = 2000) {
+    const toast = elements.toast;
+    toast.textContent = msg;
+    toast.className = `toast ${type}`;
+    toast.style.display = 'block';
+    setTimeout(() => {
+      toast.classList.add('hide');
+      setTimeout(() => {
+        toast.style.display = 'none';
+        toast.classList.remove('hide');
+        toast.className = 'toast'; // Limpa a classe para o próximo uso
+      }, 500); // tempo da animação de saída
+    }, time);
+  }
+
+  /**
+   * Salva a lista de serviços no localStorage para persistência.
+   */
+  function saveToLocalStorage() {
+    localStorage.setItem('escalaServicos', JSON.stringify(listaServicos));
+  }
+
+  /**
+   * Adiciona um evento de mouseover para mostrar o tooltip.
+   */
+  function setupTooltip(element, text) {
+      element.addEventListener('mouseenter', (event) => {
+          const tooltip = document.createElement('div');
+          tooltip.className = 'tooltip';
+          tooltip.textContent = text;
+          document.body.appendChild(tooltip);
+
+          const rect = element.getBoundingClientRect();
+          tooltip.style.left = `${rect.left + window.scrollX + rect.width / 2}px`;
+          tooltip.style.top = `${rect.top + window.scrollY - tooltip.offsetHeight - 10}px`;
+          
+          setTimeout(() => {
+            tooltip.style.opacity = '1';
+          }, 10);
+          
+          element.currentTooltip = tooltip;
+      });
+
+      element.addEventListener('mouseleave', () => {
+          if (element.currentTooltip) {
+              element.currentTooltip.style.opacity = '0';
+              setTimeout(() => {
+                  element.currentTooltip.remove();
+                  element.currentTooltip = null;
+              }, 300);
+          }
+      });
+  }
+
+  /**
+   * Atualiza a lista de funcionários disponíveis e renderiza os checkboxes.
+   */
+  function atualizarCheckboxesFuncionarios() {
+    elements.employeesList.innerHTML = '';
+    const employeesInUse = listaServicos.flatMap(s => s.employees);
+    const availableEmployees = EMPLOYEES.filter(employee => !employeesInUse.includes(employee.nome));
+
+    availableEmployees.forEach(employee => {
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = employee.nome;
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(' ' + employee.nome));
+      
+      // Adiciona o tooltip
+      setupTooltip(label, employee.funcao);
+      
+      // Adiciona os ícones de habilitação
+      if (employee.habilitacao.includes('CARRO')) {
+        const carIcon = document.createElement('span');
+        carIcon.textContent = ' 🚗';
+        carIcon.className = 'icon-carro';
+        label.appendChild(carIcon);
+      }
+      if (employee.habilitacao.includes('MOTO')) {
+        const motoIcon = document.createElement('span');
+        motoIcon.textContent = ' 🏍️';
+        motoIcon.className = 'icon-moto';
+        label.appendChild(motoIcon);
+      }
+      
+      elements.employeesList.appendChild(label);
+    });
+  }
+
+  /**
+   * Limpa todos os campos do formulário.
+   */
+  function limparFormulario() {
+    elements.serviceInput.value = '';
+    elements.osInput.value = '';
+    elements.descriptionInput.value = '';
+    elements.priorityInput.value = '';
+    elements.carsListNodes.forEach(cb => cb.checked = false);
+    elements.employeesList.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+    editIndex = -1;
+    elements.addServiceBtn.textContent = "Adicionar Serviço";
+  }
+
+  /**
+   * Renderiza um único serviço na área de preview.
+   * @param {object} item O objeto do serviço a ser renderizado.
+   * @param {number} index O índice do serviço na lista.
+   */
+  function renderizarServico(item, index) {
+    const box = document.createElement('div');
+    box.className = 'service-box';
+    box.dataset.index = index;
+
+    let contentHTML = `<h3>${item.service}</h3>`;
+    if (item.priority) contentHTML += `<p><strong>Prioridade:</strong> ${item.priority}</p>`;
+    if (item.os) contentHTML += `<p><strong>OS:</strong> ${item.os}</p>`;
+    contentHTML += `<p><strong>Carros:</strong> ${item.cars.join(", ")}</p>`;
+    contentHTML += `<p><strong>Funcionários:</strong> ${item.employees.join(", ")}</p>`;
+    contentHTML += `<p><strong>Tarefa:</strong> ${item.description}</p>`;
+
+    box.innerHTML = contentHTML;
+
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'action-btn edit-btn';
+    editBtn.textContent = '✏️ Editar';
+    editBtn.onclick = () => editarServico(index);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'action-btn remove-btn';
+    removeBtn.textContent = 'Remover ❌';
+    removeBtn.onclick = () => removerServico(index);
+
+    actions.appendChild(editBtn);
+    actions.appendChild(removeBtn);
+    box.appendChild(actions);
+
+    elements.previewDiv.appendChild(box);
+  }
+
+  /**
+   * Atualiza a área de preview e a contagem total de serviços.
+   * Re-renderiza toda a lista para simplicidade.
+   */
+  function atualizarPreview() {
+    elements.previewDiv.innerHTML = '';
+    if (listaServicos.length === 0) {
+      elements.emptyMessage.style.display = 'block';
+      elements.previewDiv.appendChild(elements.emptyMessage);
+    } else {
+      elements.emptyMessage.style.display = 'none';
+      listaServicos.forEach(renderizarServico);
+    }
+    elements.serviceCountDiv.textContent = `Total de Serviços: ${listaServicos.length}`;
+  }
+  
+  /**
+   * Ordena a lista de serviços com base na opção selecionada.
+   */
+  function sortServices() {
+    const sortValue = elements.sortOrderSelect.value;
+    const priorityOrder = { 'Alta': 1, 'Média': 2, 'Baixa': 3, '': 4 }; // Ordem de prioridade
+
+    if (sortValue === 'default') {
+      // Retorna à ordem original salva
+      listaServicos = [...originalOrder];
+    } else if (sortValue === 'priority') {
+      // Ordena por prioridade
+      listaServicos.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    } else if (sortValue === 'client') {
+      // Ordena por nome do cliente
+      listaServicos.sort((a, b) => a.service.localeCompare(b.service, 'pt-BR', { sensitivity: 'base' }));
+    }
+
+    atualizarPreview();
+  }
+
+  /**
+   * Edita um serviço existente, preenchendo o formulário com seus dados.
+   * @param {number} index O índice do serviço a ser editado.
+   */
+  function editarServico(index) {
+    const item = listaServicos[index];
+    elements.serviceInput.value = item.service;
+    elements.osInput.value = item.os || '';
+    elements.descriptionInput.value = item.description;
+    elements.priorityInput.value = item.priority || '';
+
+    elements.carsListNodes.forEach(cb => cb.checked = false);
+    atualizarCheckboxesFuncionarios();
+
+    elements.carsListNodes.forEach(cb => cb.checked = item.cars.includes(cb.value));
+    elements.employeesList.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = item.employees.includes(cb.value));
+
+    editIndex = index;
+    elements.addServiceBtn.textContent = "Salvar Edição";
+    showToast("Modo de edição ativado.", 'warning');
+  }
+
+  /**
+   * Remove um serviço da lista e atualiza a interface.
+   * @param {number} index O índice do serviço a ser removido.
+   */
+  function removerServico(index) {
+      if (confirm("Tem certeza que deseja remover este serviço?")) {
+        listaServicos.splice(index, 1);
+        originalOrder.splice(index, 1); // Remove da lista original também
+        saveToLocalStorage();
+        limparFormulario();
+        atualizarCheckboxesFuncionarios();
+        sortServices(); // Re-ordena após a remoção
+        showToast("Serviço removido com sucesso!");
+    }
+  }
+
+  /**
+   * Adiciona um novo serviço ou salva a edição de um serviço existente.
+   */
+  function adicionarOuSalvarServico() {
+    const serviceName = elements.serviceInput.value.trim();
+    const osNum = elements.osInput.value.trim();
+    const description = elements.descriptionInput.value.trim();
+    const priority = elements.priorityInput.value;
+    const selectedCars = elements.carsListNodes.filter(cb => cb.checked).map(cb => cb.value);
+    const selectedEmployees = Array.from(elements.employeesList.querySelectorAll('input[type=checkbox]')).filter(cb => cb.checked).map(cb => cb.value);
+
+    if (!serviceName || !description || selectedCars.length === 0 || selectedEmployees.length === 0) {
+      showToast("Por favor, preencha todos os campos obrigatórios!", 'error');
+      return;
+    }
+
+    if (editIndex === -1 && listaServicos.some(s => s.service.toLowerCase() === serviceName.toLowerCase())) {
+      showToast("Este cliente já foi adicionado!", 'error');
+      return;
+    }
+
+    const novoItem = {
+      service: serviceName,
+      os: osNum,
+      priority: priority,
+      cars: selectedCars,
+      employees: selectedEmployees,
+      description: description
+    };
+
+    if (editIndex > -1) {
+      listaServicos[editIndex] = novoItem;
+      // Atualiza o item correspondente na ordem original para evitar inconsistências
+      const originalIndex = originalOrder.findIndex(item => item.service === novoItem.service);
+      if (originalIndex !== -1) {
+          originalOrder[originalIndex] = { ...novoItem };
+      }
+      showToast("Serviço editado com sucesso!");
+    } else {
+      listaServicos.push(novoItem);
+      originalOrder.push({ ...novoItem }); // Salva uma cópia para a ordem original
+      showToast("Serviço adicionado com sucesso!");
+    }
+
+    saveToLocalStorage();
+    limparFormulario();
+    atualizarCheckboxesFuncionarios();
+    sortServices(); // Re-ordena a lista após adicionar/salvar
+  }
+
+  /* -------- Event Listeners -------- */
+  elements.addServiceBtn.addEventListener('click', adicionarOuSalvarServico);
+
+  elements.clearListBtn.addEventListener('click', () => {
+    if (confirm("Tem certeza que deseja limpar toda a escala?")) {
+      listaServicos = [];
+      originalOrder = []; // Limpa a ordem original também
+      saveToLocalStorage();
+      limparFormulario();
+      atualizarCheckboxesFuncionarios();
+      atualizarPreview();
+      showToast("Escala limpa com sucesso!");
+    }
+  });
+
+  // Listener para o dropdown de exportação
+  elements.exportMainBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    elements.dropdownContent.style.display = elements.dropdownContent.style.display === 'block' ? 'none' : 'block';
+  });
+  // Fecha o dropdown ao clicar fora
+  document.addEventListener('click', e => {
+    if (!elements.exportDropdown.contains(e.target)) {
+      elements.dropdownContent.style.display = 'none';
+    }
+  });
+  
+  // Novo Listener para o dropdown de ordenação
+  elements.sortOrderSelect.addEventListener('change', sortServices);
+
+  /* -------- Funções de Exportação -------- */
+  
+  /**
+   * Gera o texto formatado da escala para exportação.
+   * @returns {string} O texto completo da escala.
+   */
+  function gerarTextoEscala() {
+    if (listaServicos.length === 0) {
+      showToast("Nenhum serviço para exportar!", 'warning');
+      return null;
+    }
+    let text = `===========================================\n          ESCALA DIÁRIA - M2Visual\n===========================================\n\n`;
+    listaServicos.forEach(item => {
+      text += `Cliente: ${item.service}\n`;
+      if (item.priority) text += `Prioridade: ${item.priority}\n`;
+      if (item.os) text += `OS: ${item.os}\n`;
+      text += `Carros: ${item.cars.join(", ")}\n`;
+      text += `Funcionários: ${item.employees.join(", ")}\n`;
+      text += `Tarefa: ${item.description}\n`;
+      text += `-------------------------------------------\n`;
+    });
+    return text;
+  }
+
+  // Exportar para TXT
+  elements.exportTxtBtn.addEventListener('click', () => {
+    const text = gerarTextoEscala();
+    if (!text) return;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.download = `Escala-${new Date().toLocaleDateString('pt-BR')}.txt`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    showToast("Arquivo TXT gerado com sucesso!");
+    elements.dropdownContent.style.display = 'none';
+  });
+
+  // Exportar para PDF
+  elements.exportPdfBtn.addEventListener('click', () => {
+    if (listaServicos.length === 0) {
+      showToast("Nenhum serviço para exportar!", 'warning');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(12);
+    doc.text("ESCALA DIÁRIA - M2Visual", 105, 10, { align: "center" });
+    let y = 20;
+    listaServicos.forEach(item => {
+      const lines = [
+        `Cliente: ${item.service}`,
+        ...(item.priority ? [`Prioridade: ${item.priority}`] : []),
+        ...(item.os ? [`OS: ${item.os}`] : []),
+        `Carros: ${item.cars.join(", ")}`,
+        `Funcionários: ${item.employees.join(", ")}`,
+        `Tarefa: ${item.description}`,
+        `-------------------------------------------`
+      ];
+      lines.forEach(l => {
+        doc.text(l, 10, y);
+        y += 7;
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+      y += 3;
+    });
+    doc.save(`Escala-${new Date().toLocaleDateString('pt-BR')}.pdf`);
+    showToast("PDF gerado com sucesso!");
+    elements.dropdownContent.style.display = 'none';
+  });
+  
+  /**
+   * @description Copia o texto para a área de transferência usando uma solução robusta.
+   * @param {string} text O texto a ser copiado.
+   */
+  function copyToClipboard(text) {
+    if (!text) return;
+    const tempTextarea = document.createElement('textarea');
+    tempTextarea.value = text;
+    tempTextarea.style.position = 'fixed';
+    tempTextarea.style.top = '0';
+    tempTextarea.style.left = '0';
+    tempTextarea.style.opacity = '0';
+    document.body.appendChild(tempTextarea);
+    tempTextarea.focus();
+    tempTextarea.select();
+    try {
+      const success = document.execCommand('copy');
+      if (success) {
+        showToast("Escala copiada para o WhatsApp!");
+      } else {
+        showToast("Não foi possível copiar. Tente novamente.", 'error');
+      }
+    } catch (err) {
+      showToast("Erro ao copiar para a área de transferência.", 'error');
+    } finally {
+      document.body.removeChild(tempTextarea);
+    }
+  }
+
+  // Copiar para WhatsApp
+  elements.copyBtn.addEventListener('click', () => {
+    const text = gerarTextoEscala();
+    if (!text) return;
+    copyToClipboard(text);
+    elements.dropdownContent.style.display = 'none';
+  });
+  
+  // Executa a função inicial para carregar os dados
+  if (listaServicos.length > 0) {
+      originalOrder = [...listaServicos]; // Salva a ordem inicial ao carregar
+  }
+  atualizarCheckboxesFuncionarios();
+  atualizarPreview();
+});
+</script>
+
+</body>
+</html>
