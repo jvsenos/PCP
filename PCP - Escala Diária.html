@@ -50,6 +50,11 @@ body.dark-mode .form-section select:focus { border-color: var(--cor-sucesso); }
 body.dark-mode .checkbox-group label { background: #2a3541; border-color: #444; color: var(--cor-primaria); }
 body.dark-mode .checkbox-group label:hover { background: #344252; }
 body.dark-mode .service-box { background: #2a3541; border-left-color: var(--cor-info); }
+/* === Prioridades por cor (apenas cor da faixa lateral) === */
+.service-box.priority-alta  { border-left-color: var(--cor-erro); }    /* vermelho */
+.service-box.priority-media { border-left-color: var(--cor-aviso); }   /* amarelo */
+.service-box.priority-baixa { border-left-color: var(--cor-sucesso); } /* verde */
+
 body.dark-mode .service-box h3,
 body.dark-mode .service-box p,
 body.dark-mode .service-box strong { color: var(--cor-primaria); }
@@ -74,12 +79,13 @@ body.dark-mode .tooltip::after { background-color: var(--cor-primaria); }
     background-color: #ccc; transition: .4s; border-radius: 34px;
 }
 .slider:before {
-    position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px;
+    position: absolute; content: "☀️"; height: 20px; width: 20px; left: 4px; bottom: 4px;
     background-color: white; transition: .4s; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1;
 }
 input:checked + .slider { background-color: #2196F3; }
 input:focus + .slider { box-shadow: 0 0 1px #2196F3; }
-input:checked + .slider:before { transform: translateX(22px); }
+input:checked + .slider:before { transform: translateX(22px); content: "🌙"; }
 
 .container {
   max-width:900px; margin:30px auto; background: var(--cor-secundaria);
@@ -387,7 +393,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initializeApp() {
     // Forçar atualização sempre que carregar
-    localStorage.setItem('m2visual_employees', JSON.stringify(DEFAULT_EMPLOYEES));
+    if (!localStorage.getItem('m2visual_employees')) {
+        localStorage.setItem('m2visual_employees', JSON.stringify(DEFAULT_EMPLOYEES));
+    }
     if (!localStorage.getItem('m2visual_cars')) {
         localStorage.setItem('m2visual_cars', JSON.stringify(DEFAULT_CARS));
     }
@@ -473,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchTerm = filterText.toLowerCase();
         return (
             s.service.toLowerCase().includes(searchTerm) ||
-            s.osNumber.toLowerCase().includes(searchTerm) ||
+            (s.osNumber || '').toLowerCase().includes(searchTerm) ||
             s.description.toLowerCase().includes(searchTerm) ||
             s.employees.some(e => e.toLowerCase().includes(searchTerm))
         );
@@ -489,12 +497,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const index = listaServicos.indexOf(s);
       const box = document.createElement('div');
       box.className = 'service-box';
-      box.innerHTML = `<h3>${s.service}${s.osNumber ? ' (OS: ' + s.osNumber + ')' : ''}</h3>
-        <p><strong>Etapa:</strong> ${s.etapa || 'Não definida'}</p>
-        <p><strong>Prioridade:</strong> ${s.priority || 'Não definida'}</p>
-        <p><strong>Carros:</strong> ${s.cars.join(', ') || 'Nenhum'}</p>
-        <p><strong>Funcionários:</strong> ${s.employees.join(', ') || 'Nenhum'}</p>
-        <p><strong>Tarefa:</strong> ${s.description}</p>`;
+
+// Mapeia prioridade -> classe de cor (sem acentos no nome da classe)
+const priorityClassMap = {
+  'Alta':  'priority-alta',
+  'Média': 'priority-media',
+  'Media': 'priority-media', // fallback sem acento
+  'Baixa': 'priority-baixa'
+};
+if (s.priority && priorityClassMap[s.priority]) {
+  box.classList.add(priorityClassMap[s.priority]);
+}
+
+
+      // Build content safely without innerHTML (avoid XSS)
+const h3 = document.createElement('h3');
+h3.textContent = s.service + (s.osNumber ? ' (OS: ' + s.osNumber + ')' : '');
+box.appendChild(h3);
+
+// Helper to create "<strong>Label:</strong> value"
+function row(label, value) {
+  const p = document.createElement('p');
+  const strong = document.createElement('strong');
+  strong.textContent = label;
+  p.appendChild(strong);
+  p.appendChild(document.createTextNode(' ' + value));
+  return p;
+}
+
+box.appendChild(row('Etapa:', s.etapa || 'Não definida'));
+box.appendChild(row('Prioridade:', s.priority || 'Não definida'));
+box.appendChild(row('Carros:', (s.cars && s.cars.length ? s.cars.join(', ') : 'Nenhum')));
+box.appendChild(row('Funcionários:', (s.employees && s.employees.length ? s.employees.join(', ') : 'Nenhum')));
+box.appendChild(row('Tarefa:', s.description));
+
       
       const actions = document.createElement('div'); actions.className = 'actions';
       const editBtn = document.createElement('button'); editBtn.textContent = '✏️';
@@ -674,6 +710,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   if (savedTheme === 'dark' || (savedTheme === null && userPrefersDark)) { enableDarkMode(); } else { disableDarkMode(); }
 
+  // Debounce utility for smoother search
+  function debounce(fn, wait = 300) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(null, args), wait); };
+  }
   // Event Listeners
   elements.addServiceBtn.addEventListener('click', adicionarServico);
   elements.clearListBtn.addEventListener('click', limparEscala);
@@ -685,8 +726,10 @@ document.addEventListener('DOMContentLoaded', () => {
   elements.sortOrderSelect.addEventListener('change', ordenarServicos);
   elements.modeToggleCheckbox.addEventListener('change', toggleMode);
   elements.escalaDateInput.addEventListener('change', loadServicesForDate);
-  elements.searchInput.addEventListener('input', () => atualizarPreview(elements.searchInput.value));
-  elements.etapaInput.addEventListener('change', () => {
+  const debouncedAtualizar = debounce(() => atualizarPreview(elements.searchInput.value), 300);
+  elements.searchInput.addEventListener('input', debouncedAtualizar);
+  elements.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') atualizarPreview(elements.searchInput.value); });
+elements.etapaInput.addEventListener('change', () => {
     if (elements.etapaInput.value === 'Outros') {
         elements.outraEtapaContainer.style.display = 'block';
         elements.outraEtapaInput.focus();
